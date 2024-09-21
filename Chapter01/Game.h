@@ -7,15 +7,15 @@
 // ----------------------------------------------------------------
 
 #pragma once
+#include "Ball.h"
+#include "Paddle.h"
+#include "Wall.h"
+#include "Utils.h"
+
 #include "SDL/SDL.h"
 
-// Vector2 struct just stores x/y coordinates
-// (for now)
-struct Vector2
-{
-	float x;
-	float y;
-};
+#include <memory>
+#include <vector>
 
 // Game class
 class Game
@@ -28,11 +28,22 @@ public:
 	void RunLoop();
 	// Shutdown the game
 	void Shutdown();
+
+	static Utils::Extents& GetExtents();
 private:
 	// Helper functions for the game loop
 	void ProcessInput();
 	void UpdateGame();
 	void GenerateOutput();
+
+	// Pong specific helper functions
+	void SetupWalls();
+	void SetupBalls();
+	void SetupPaddles();
+
+	void HandleCollisions(Ball& ball);
+	bool CheckBallPaddle(Ball& ball, const Paddle& paddle);
+	bool CheckBallWall(Ball& ball, const Wall& wall);
 
 	// Window created by SDL
 	SDL_Window* mWindow;
@@ -44,12 +55,8 @@ private:
 	bool mIsRunning;
 	
 	// Pong specific
-	// Direction of paddle
-	int mPaddleDir;
-	// Position of paddle
-	Vector2 mPaddlePos;
-	// Position of ball
-	Vector2 mBallPos;
-	// Velocity of ball
-	Vector2 mBallVel;
+	std::vector<std::unique_ptr<Paddle>> mPaddles;
+	std::vector<std::unique_ptr<Ball>> mBalls;
+	std::vector<std::unique_ptr<Wall>> mWalls;
+	std::vector<IGameObject*> mGameObjects;
 };

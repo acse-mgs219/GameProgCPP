@@ -8,15 +8,11 @@
 
 #include "Game.h"
 
-const int thickness = 15;
-const float paddleH = 100.0f;
-
 Game::Game()
 :mWindow(nullptr)
 ,mRenderer(nullptr)
 ,mTicksCount(0)
 ,mIsRunning(true)
-,mPaddleDir(0)
 {
 	
 }
@@ -59,13 +55,12 @@ bool Game::Initialize()
 		SDL_Log("Failed to create renderer: %s", SDL_GetError());
 		return false;
 	}
-	//
-	mPaddlePos.x = 10.0f;
-	mPaddlePos.y = 768.0f/2.0f;
-	mBallPos.x = 1024.0f/2.0f;
-	mBallPos.y = 768.0f/2.0f;
-	mBallVel.x = -200.0f;
-	mBallVel.y = 235.0f;
+
+	// Set up pong specific classes
+	SetupBalls();
+	SetupPaddles();
+	SetupWalls();
+
 	return true;
 }
 
@@ -100,16 +95,10 @@ void Game::ProcessInput()
 	{
 		mIsRunning = false;
 	}
-	
-	// Update paddle direction based on W/S keys
-	mPaddleDir = 0;
-	if (state[SDL_SCANCODE_W])
+
+	for (auto& go : mGameObjects)
 	{
-		mPaddleDir -= 1;
-	}
-	if (state[SDL_SCANCODE_S])
-	{
-		mPaddleDir += 1;
+		go->ProcessInput(state);
 	}
 }
 
@@ -132,61 +121,15 @@ void Game::UpdateGame()
 	// Update tick counts (for next frame)
 	mTicksCount = SDL_GetTicks();
 	
-	// Update paddle position based on direction
-	if (mPaddleDir != 0)
+	for (auto& go : mGameObjects)
 	{
-		mPaddlePos.y += mPaddleDir * 300.0f * deltaTime;
-		// Make sure paddle doesn't move off screen!
-		if (mPaddlePos.y < (paddleH/2.0f + thickness))
-		{
-			mPaddlePos.y = paddleH/2.0f + thickness;
-		}
-		else if (mPaddlePos.y > (768.0f - paddleH/2.0f - thickness))
-		{
-			mPaddlePos.y = 768.0f - paddleH/2.0f - thickness;
-		}
+		go->UpdateSelf(deltaTime);
 	}
-	
-	// Update ball position based on ball velocity
-	mBallPos.x += mBallVel.x * deltaTime;
-	mBallPos.y += mBallVel.y * deltaTime;
-	
-	// Bounce if needed
-	// Did we intersect with the paddle?
-	float diff = mPaddlePos.y - mBallPos.y;
-	// Take absolute value of difference
-	diff = (diff > 0.0f) ? diff : -diff;
-	if (
-		// Our y-difference is small enough
-		diff <= paddleH / 2.0f &&
-		// We are in the correct x-position
-		mBallPos.x <= 25.0f && mBallPos.x >= 20.0f &&
-		// The ball is moving to the left
-		mBallVel.x < 0.0f)
+
+	for (auto& ball : mBalls)
 	{
-		mBallVel.x *= -1.0f;
-	}
-	// Did the ball go off the screen? (if so, end game)
-	else if (mBallPos.x <= 0.0f)
-	{
-		mIsRunning = false;
-	}
-	// Did the ball collide with the right wall?
-	else if (mBallPos.x >= (1024.0f - thickness) && mBallVel.x > 0.0f)
-	{
-		mBallVel.x *= -1.0f;
-	}
-	
-	// Did the ball collide with the top wall?
-	if (mBallPos.y <= thickness && mBallVel.y < 0.0f)
-	{
-		mBallVel.y *= -1;
-	}
-	// Did the ball collide with the bottom wall?
-	else if (mBallPos.y >= (768 - thickness) &&
-		mBallVel.y > 0.0f)
-	{
-		mBallVel.y *= -1;
+		// Bounce if needed
+		HandleCollisions(*ball);
 	}
 }
 
@@ -207,46 +150,146 @@ void Game::GenerateOutput()
 	// Draw walls
 	SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
 	
-	// Draw top wall
-	SDL_Rect wall{
-		0,			// Top left x
-		0,			// Top left y
-		1024,		// Width
-		thickness	// Height
-	};
-	SDL_RenderFillRect(mRenderer, &wall);
-	
-	// Draw bottom wall
-	wall.y = 768 - thickness;
-	SDL_RenderFillRect(mRenderer, &wall);
-	
-	// Draw right wall
-	wall.x = 1024 - thickness;
-	wall.y = 0;
-	wall.w = thickness;
-	wall.h = 1024;
-	SDL_RenderFillRect(mRenderer, &wall);
-	
-	// Draw paddle
-	SDL_Rect paddle{
-		static_cast<int>(mPaddlePos.x),
-		static_cast<int>(mPaddlePos.y - paddleH/2),
-		thickness,
-		static_cast<int>(paddleH)
-	};
-	SDL_RenderFillRect(mRenderer, &paddle);
-	
-	// Draw ball
-	SDL_Rect ball{	
-		static_cast<int>(mBallPos.x - thickness/2),
-		static_cast<int>(mBallPos.y - thickness/2),
-		thickness,
-		thickness
-	};
-	SDL_RenderFillRect(mRenderer, &ball);
+	for (const auto& go : mGameObjects)
+	{
+		SDL_RenderFillRect(mRenderer, &(go->GetRect()));
+	}
 	
 	// Swap front buffer and back buffer
 	SDL_RenderPresent(mRenderer);
+}
+
+void Game::SetupWalls()
+{
+	// top wall
+	Wall wall = Wall{ 0, 0, 1024, Utils::defaultThickness };
+	mWalls.push_back(std::make_unique<Wall>(wall));
+	mGameObjects.emplace_back(mWalls.back().get());
+
+	// bottom wall
+	wall.mOriginY = 768 - Utils::defaultThickness;
+	mWalls.push_back(std::make_unique<Wall>(wall));
+	mGameObjects.emplace_back(mWalls.back().get());
+
+	// right wall
+	wall.mOriginX = 1024 - Utils::defaultThickness;
+	wall.mOriginY = 0;
+	wall.mWidth = Utils::defaultThickness;
+	wall.mHeight = 1024;
+	mWalls.push_back(std::make_unique<Wall>(wall));
+	mGameObjects.emplace_back(mWalls.back().get());
+}
+
+void Game::SetupBalls()
+{
+	Utils::Vector2 ballPos{ 1024.f / 2.f, 768.f / 2.f };
+	Utils::Vector2 ballVel{ -200.f, 235.f };
+	mBalls.emplace_back(std::make_unique<Ball>(ballPos, ballVel));
+	mGameObjects.emplace_back(mBalls.back().get());
+}
+
+void Game::SetupPaddles()
+{
+	Utils::Vector2 paddlePos{ 10.f, 768.f / 2.f };
+	mPaddles.emplace_back(std::make_unique<Paddle>(paddlePos));
+	mGameObjects.emplace_back(mPaddles.back().get());
+}
+
+void Game::HandleCollisions(Ball& ball)
+{
+	bool anyCollisions{ false };
+	for (const auto& paddle : mPaddles)
+	{
+		anyCollisions &= CheckBallPaddle(ball, *paddle);
+	}
+	if (anyCollisions)
+	{
+		return;
+	}
+
+	// Did the ball go off the screen? (if so, end game)
+	if (ball.mPosition.x <= GetExtents().MinX(ball.mThickness))
+	{
+		mIsRunning = false;
+	}
+
+	for (const auto& wall : mWalls)
+	{
+		CheckBallWall(ball, *wall);
+	}
+}
+
+bool Game::CheckBallPaddle(Ball& ball, const Paddle& paddle)
+{
+	// Did we intersect with the paddle?
+	float diff = paddle.mPosition.y - ball.mPosition.y;
+	// Take absolute value of difference
+	diff = (diff > 0.0f) ? diff : -diff;
+	if (
+		// Our y-difference is small enough
+		diff <= paddle.mHeight / 2.0f &&
+		// We are in the correct x-position
+		paddle.mPosition.x <= 25.0f && paddle.mPosition.x >= 20.0f &&
+		// The ball is moving to the left
+		ball.mVelocity.x < 0.0f)
+	{
+		ball.mVelocity.x *= -1.0f;
+		return true;
+	}
+
+	return false;
+}
+
+bool Game::CheckBallWall(Ball& ball, const Wall& wall)
+{
+	// Calculate the ball's radius
+	float ballRadius = ball.mThickness / 2.0f;
+
+	// Define the boundaries of the ball
+	float ballLeft = ball.mPosition.x - ballRadius;
+	float ballRight = ball.mPosition.x + ballRadius;
+	float ballTop = ball.mPosition.y - ballRadius;
+	float ballBottom = ball.mPosition.y + ballRadius;
+
+	// Define the boundaries of the wall
+	float wallLeft = static_cast<float>(wall.mOriginX);
+	float wallRight = static_cast<float>(wall.mOriginX + wall.mWidth);
+	float wallTop = static_cast<float>(wall.mOriginY);
+	float wallBottom = static_cast<float>(wall.mOriginY + wall.mHeight);
+
+	// Boolean flag to check if collision happened
+	bool collided = false;
+
+	// Check for collisions on each side and reflect the ball accordingly
+	// 1. Check if the ball hits the left wall
+	if (ballRight >= wallLeft && ballLeft <= wallLeft && ball.mPosition.x < wallLeft) {
+		ball.mVelocity.x = -ball.mVelocity.x;  // Reverse horizontal velocity
+		ball.mPosition.x = wallLeft - ballRadius;  // Correct the position
+		return true;
+	}
+
+	// 2. Check if the ball hits the right wall
+	if (ballLeft <= wallRight && ballRight >= wallRight && ball.mPosition.x > wallRight) {
+		ball.mVelocity.x = -ball.mVelocity.x;  // Reverse horizontal velocity
+		ball.mPosition.x = wallRight + ballRadius;  // Correct the position
+		return true;
+	}
+
+	// 3. Check if the ball hits the top wall
+	if (ballBottom >= wallTop && ballTop <= wallTop && ball.mPosition.y < wallTop) {
+		ball.mVelocity.y = -ball.mVelocity.y;  // Reverse vertical velocity
+		ball.mPosition.y = wallTop - ballRadius;  // Correct the position
+		return true;
+	}
+	
+	// 4. Check if the ball hits the bottom wall
+	if (ballTop <= wallBottom && ballBottom >= wallBottom && ball.mPosition.y > wallBottom) {
+		ball.mVelocity.y = -ball.mVelocity.y;  // Reverse vertical velocity
+		ball.mPosition.y = wallBottom + ballRadius;  // Correct the position
+		return true;
+	}
+
+	return false;  // No collision occurred
 }
 
 void Game::Shutdown()
@@ -254,4 +297,17 @@ void Game::Shutdown()
 	SDL_DestroyRenderer(mRenderer);
 	SDL_DestroyWindow(mWindow);
 	SDL_Quit();
+}
+
+Utils::Extents& Game::GetExtents()
+{
+	static Utils::Extents sExtents = {
+		.top = 0,
+		.bottom = 768,
+		.right = 1024,
+		.left = 0,
+		.thickness = Utils::defaultThickness
+	};
+
+	return sExtents;
 }
