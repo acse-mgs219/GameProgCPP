@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 
 // Game class
 class Game
@@ -35,6 +36,7 @@ private:
 	void ProcessInput();
 	void UpdateGame();
 	void GenerateOutput();
+	void PrintScores();
 
 	// Pong specific helper functions
 	void SetupWalls();
@@ -44,6 +46,7 @@ private:
 	void HandleCollisions(Ball& ball);
 	bool CheckBallPaddle(Ball& ball, const Paddle& paddle);
 	bool CheckBallWall(Ball& ball, const Wall& wall);
+	void HandleBallExited();
 
 	// Window created by SDL
 	SDL_Window* mWindow;
@@ -59,4 +62,5 @@ private:
 	std::vector<std::unique_ptr<Ball>> mBalls;
 	std::vector<std::unique_ptr<Wall>> mWalls;
 	std::vector<IGameObject*> mGameObjects;
+	std::pair<int, int> mScores;
 };
