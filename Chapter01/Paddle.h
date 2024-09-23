@@ -19,9 +19,9 @@ struct Paddle : public IGameObject
 public:
 	enum class Direction
 	{
-		Down = -1,
+		Up = -1,
 		Still = 0,
-		Up = 1
+		Down = 1
 	};
 
 	Paddle(Utils::Vector2 initialPosition, PaddleControls controls = {}, std::optional<float> width = std::nullopt, std::optional<float> height = std::nullopt, std::optional<float> speed = std::nullopt);
@@ -29,7 +29,7 @@ public:
 	// Inherited via IGameObject
 	void ProcessInput(const Uint8* state) override;
 	void UpdateSelf(float deltaTime) override;
-	const SDL_Rect& GetRect() const override { return mSDLRect; }
+	const SDL_Rect& GetRect() const override;
 
 	void SetDirection(Paddle::Direction dir) { mDirection = dir; }
 
@@ -41,7 +41,5 @@ public:
 private:
 	PaddleControls mControls;
 	float mSpeed;
-
-	SDL_Rect mSDLRect;
 };
 

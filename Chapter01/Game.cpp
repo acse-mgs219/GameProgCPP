@@ -222,14 +222,13 @@ void Game::HandleCollisions(Ball& ball)
 bool Game::CheckBallPaddle(Ball& ball, const Paddle& paddle)
 {
 	// Did we intersect with the paddle?
-	float diff = paddle.mPosition.y - ball.mPosition.y;
-	// Take absolute value of difference
-	diff = (diff > 0.0f) ? diff : -diff;
+	float diffY = std::abs(paddle.mPosition.y - ball.mPosition.y);
+	float diffX = std::abs(paddle.mPosition.x - ball.mPosition.x);
 	if (
 		// Our y-difference is small enough
-		diff <= paddle.mHeight / 2.0f &&
+		diffY <= paddle.mHeight / 2.0f &&
 		// We are in the correct x-position
-		paddle.mPosition.x <= 25.0f && paddle.mPosition.x >= 20.0f &&
+		diffX <= (paddle.mWidth + ball.mThickness) / 2.f &&
 		// The ball is moving to the left
 		ball.mVelocity.x < 0.0f)
 	{

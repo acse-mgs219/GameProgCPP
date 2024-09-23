@@ -15,14 +15,10 @@ public:
 	// Inherited via IGameObject
 	void ProcessInput(const Uint8* state) override {}
 	void UpdateSelf(float deltaTime) override;
-	const SDL_Rect& GetRect() const override { return mSDLRect; }
+	const SDL_Rect& GetRect() const override;
 
 	Utils::Vector2 mPosition;
 	Utils::Vector2 mVelocity;
 	float mThickness;
-
-private:
-
-	SDL_Rect mSDLRect;
 };
 

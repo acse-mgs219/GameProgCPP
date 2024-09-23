@@ -13,12 +13,6 @@ Paddle::Paddle(Utils::Vector2 initialPosition, PaddleControls controls, std::opt
 	, mHeight{width.value_or(defaultHeight)}
 	, mWidth{height.value_or(Utils::defaultThickness)}
 	, mSpeed{speed.value_or(defaultSpeed)}
-	, mSDLRect{
-		static_cast<int>(mPosition.x),
-		static_cast<int>(mPosition.y - mHeight / 2),
-		static_cast<int>(mWidth),
-		static_cast<int>(mHeight)
-	}
 {
 }
 
@@ -55,4 +49,14 @@ void Paddle::UpdateSelf(float deltaTime)
 
 	// Make sure paddle doesn't move off screen!
 	mPosition.y = std::clamp(mPosition.y, sExtents.MinY(mHeight), sExtents.MaxY(mHeight));
+}
+
+const SDL_Rect& Paddle::GetRect() const
+{
+	return {
+		static_cast<int>(mPosition.x),
+		static_cast<int>(mPosition.y - mHeight / 2),
+		static_cast<int>(mWidth),
+		static_cast<int>(mHeight)
+	};
 }
