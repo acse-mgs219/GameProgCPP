@@ -14,11 +14,11 @@ namespace Utils
 
 	float Extents::MinX(float width) const
 	{
-		return left + thickness + width / 2.f;
+		return left + /*thickness +*/ width / 2.f;
 	}
 
 	float Extents::MaxX(float width) const
 	{
-		return right - width / 2.f - thickness;
+		return right - width / 2.f /*- thickness*/;
 	}
 }
