@@ -8,10 +8,9 @@
 
 #include "Game.h"
 
-#include "SDL/SDL_ttf.h"
-
 #include <string>
 #include <format>
+#include <iostream>
 
 Game::Game()
 :mWindow(nullptr)
@@ -65,6 +64,8 @@ bool Game::Initialize()
 	SetupBalls();
 	SetupPaddles();
 	SetupWalls();
+
+	InitText();
 
 	return true;
 }
@@ -168,25 +169,27 @@ void Game::GenerateOutput()
 
 void Game::PrintScores()
 {
-	//this opens a font style and sets a size
-	TTF_Font* Sans = TTF_OpenFont("Sans.ttf", 24);
+	if (mFont == nullptr)
+	{
+		return;
+	}
 
 	// this is the color in rgb format,
 	// maxing out all would give you the color white,
 	// and it will be your text's color
-	SDL_Color White = { 255, 255, 255 };
+	static SDL_Color White = { 255, 255, 255 };
 
 	// as TTF_RenderText_Solid could only be used on
 	// SDL_Surface then you have to create the surface first
 	std::string scoreMessage = std::format("{} - {}", mScores.first, mScores.second);
-	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(Sans, scoreMessage.data(), White);
+	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(mFont, scoreMessage.data(), White);
 
 	// now you can convert it into a texture
 	SDL_Texture* Message = SDL_CreateTextureFromSurface(mRenderer, surfaceMessage);
 
-	SDL_Rect Message_rect; //create a rect
-	Message_rect.x = Utils::defaultThickness + 200;  //controls the rect's x coordinate 
-	Message_rect.y = Utils::defaultThickness + 200; // controls the rect's y coordinte
+	SDL_Rect Message_rect{}; //create a rect
+	Message_rect.x = Utils::defaultThickness + 20;  //controls the rect's x coordinate 
+	Message_rect.y = Utils::defaultThickness + 20; // controls the rect's y coordinte
 	Message_rect.w = 200; // controls the width of the rect
 	Message_rect.h = 50; // controls the height of the rect
 
@@ -246,6 +249,18 @@ void Game::SetupPaddles()
 	Utils::Vector2 paddlePos{ 10.f, 768.f / 2.f };
 	mPaddles.emplace_back(std::make_unique<Paddle>(paddlePos));
 	mGameObjects.emplace_back(mPaddles.back().get());
+}
+
+void Game::InitText()
+{
+	//this opens a font style and sets a size
+	TTF_Init();
+	mFont = TTF_OpenFont("Data/whatnot.ttf", 12);
+	if (mFont == nullptr)
+	{
+		std::string error = TTF_GetError();
+		std::cout << error;
+	}
 }
 
 void Game::HandleCollisions(Ball& ball)

@@ -13,6 +13,7 @@
 #include "Utils.h"
 
 #include "SDL/SDL.h"
+#include "SDL/SDL_ttf.h"
 
 #include <memory>
 #include <vector>
@@ -43,6 +44,7 @@ private:
 	void SetupBalls();
 	void SetupPaddles();
 
+	void InitText();
 	void HandleCollisions(Ball& ball);
 	bool CheckBallPaddle(Ball& ball, const Paddle& paddle);
 	bool CheckBallWall(Ball& ball, const Wall& wall);
@@ -52,6 +54,8 @@ private:
 	SDL_Window* mWindow;
 	// Renderer for 2D drawing
 	SDL_Renderer* mRenderer;
+	// Font we use for showing the scores
+	TTF_Font* mFont;
 	// Number of ticks since start of game
 	Uint32 mTicksCount;
 	// Game should continue to run
