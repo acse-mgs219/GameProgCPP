@@ -127,6 +127,14 @@ void Game::UpdateGame()
 	// Update tick counts (for next frame)
 	mTicksCount = SDL_GetTicks();
 	
+	for (auto& paddle : mPaddles)
+	{
+		if (paddle->IsAIControlled())
+		{
+			paddle->MockInputAI(deltaTime, mBalls);
+		}
+	}
+
 	for (auto& go : mGameObjects)
 	{
 		go->UpdateSelf(deltaTime);
@@ -227,13 +235,14 @@ void Game::SetupWalls()
 	mWalls.emplace_back(std::make_unique<Wall>(orgX, orgY, width, height));
 	mGameObjects.emplace_back(mWalls.back().get());
 
+	// #TODO: We could have data-defined different setups, for example for number of players or shape of walls
 	// right wall
-	orgX = 1024 - Utils::defaultThickness;
-	orgY = 0;
-	width = Utils::defaultThickness;
-	height = 1024;
-	mWalls.emplace_back(std::make_unique<Wall>(orgX, orgY, width, height));
-	mGameObjects.emplace_back(mWalls.back().get());
+	//orgX = 1024 - Utils::defaultThickness;
+	//orgY = 0;
+	//width = Utils::defaultThickness;
+	//height = 1024;
+	//mWalls.emplace_back(std::make_unique<Wall>(orgX, orgY, width, height));
+	//mGameObjects.emplace_back(mWalls.back().get());
 }
 
 void Game::SetupBalls()
@@ -248,6 +257,11 @@ void Game::SetupPaddles()
 {
 	Utils::Vector2 paddlePos{ 10.f, 768.f / 2.f };
 	mPaddles.emplace_back(std::make_unique<Paddle>(paddlePos));
+	mGameObjects.emplace_back(mPaddles.back().get());
+
+	paddlePos = { 1024.f - 10.f, 768.f / 2.f };
+	PaddleControls aiPaddleControls{ .mIsHuman = false, .mAIStrength = PaddleControls::Difficulty::Medium, .mUpButton = SDL_Scancode::SDL_NUM_SCANCODES, .mDownButton = SDL_Scancode::SDL_NUM_SCANCODES };
+	mPaddles.emplace_back(std::make_unique<Paddle>(paddlePos, aiPaddleControls));
 	mGameObjects.emplace_back(mPaddles.back().get());
 }
 
