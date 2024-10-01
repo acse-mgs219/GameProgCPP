@@ -5,7 +5,9 @@
 
 Ball::Ball(Utils::Vector2 pos, Utils::Vector2 vel, std::optional<float> thickness) 
 	: mPosition(pos)
+	, mOriginalPosition(pos)
 	, mVelocity(vel)
+	, mOriginalVelocity(vel)
 	, mThickness(thickness.value_or(Utils::defaultThickness))
 {
 }
@@ -28,4 +30,11 @@ const SDL_Rect& Ball::GetRect() const
 		static_cast<int>(mThickness),
 		static_cast<int>(mThickness)
 	};
+}
+
+void Ball::Reset()
+{
+	mPosition = mOriginalPosition;
+	mVelocity = mOriginalVelocity;
+	mLastPaddleTouched = nullptr;
 }

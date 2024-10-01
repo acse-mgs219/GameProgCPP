@@ -181,7 +181,7 @@ void Game::PrintScores()
 
 	// as TTF_RenderText_Solid could only be used on
 	// SDL_Surface then you have to create the surface first
-	std::string scoreMessage = std::format("{} - {}", mScores.first, mScores.second);
+	std::string scoreMessage = std::format("{} - {}", mPaddles.front()->GetScore(), mPaddles.back()->GetScore());
 	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(mFont, scoreMessage.data(), White);
 
 	// now you can convert it into a texture
@@ -276,9 +276,9 @@ void Game::HandleCollisions(Ball& ball)
 	}
 
 	// Did the ball go off the screen? (if so, end game)
-	if (ball.mPosition.x <= GetExtents().MinX(ball.mThickness))
+	if (GetExtents().IsInside(ball.mPosition, ball.mThickness) == false)
 	{
-		mIsRunning = false;
+		HandleBallExited(ball);
 	}
 
 	for (const auto& wall : mWalls)
@@ -287,7 +287,7 @@ void Game::HandleCollisions(Ball& ball)
 	}
 }
 
-bool Game::CheckBallPaddle(Ball& ball, const Paddle& paddle)
+bool Game::CheckBallPaddle(Ball& ball, Paddle& paddle)
 {
 	// Did we intersect with the paddle?
 	float diffY = std::abs(paddle.mPosition.y - ball.mPosition.y);
@@ -301,6 +301,7 @@ bool Game::CheckBallPaddle(Ball& ball, const Paddle& paddle)
 		ball.mVelocity.x < 0.0f)
 	{
 		ball.mVelocity.x *= -1.0f;
+		ball.mLastPaddleTouched = &paddle;
 		return true;
 	}
 
@@ -359,9 +360,13 @@ bool Game::CheckBallWall(Ball& ball, const Wall& wall)
 	return false;  // No collision occurred
 }
 
-void Game::HandleBallExited()
+void Game::HandleBallExited(Ball& ball)
 {
-	// Implement scoring
+	if (ball.mLastPaddleTouched)
+	{
+		ball.mLastPaddleTouched->Score();
+	}
+	ball.Reset();
 }
 
 void Game::Shutdown()

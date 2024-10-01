@@ -17,6 +17,7 @@ namespace Utils
 		float MaxY(float height) const;
 		float MinX(float width) const;
 		float MaxX(float width) const;
+		bool IsInside(Vector2 pos, float thickness) const;
 
 		float top;
 		float bottom;

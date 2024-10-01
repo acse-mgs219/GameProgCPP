@@ -32,6 +32,8 @@ public:
 	const SDL_Rect& GetRect() const override;
 
 	void SetDirection(Paddle::Direction dir) { mDirection = dir; }
+	void Score() { mScore++; }
+	int GetScore() const { return mScore; }
 
 	Direction mDirection{ Direction::Up };
 	Utils::Vector2 mPosition;
@@ -41,5 +43,6 @@ public:
 private:
 	PaddleControls mControls;
 	float mSpeed;
+	int mScore{0};
 };
 

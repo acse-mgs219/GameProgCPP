@@ -46,9 +46,9 @@ private:
 
 	void InitText();
 	void HandleCollisions(Ball& ball);
-	bool CheckBallPaddle(Ball& ball, const Paddle& paddle);
+	bool CheckBallPaddle(Ball& ball, Paddle& paddle);
 	bool CheckBallWall(Ball& ball, const Wall& wall);
-	void HandleBallExited();
+	void HandleBallExited(Ball& ball);
 
 	// Window created by SDL
 	SDL_Window* mWindow;

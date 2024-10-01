@@ -21,4 +21,12 @@ namespace Utils
 	{
 		return right - width / 2.f /*- thickness*/;
 	}
+
+	bool Extents::IsInside(Vector2 pos, float thickness) const
+	{
+		return pos.x >= MinX(thickness)
+			&& pos.x <= MaxX(thickness)
+			&& pos.y >= MinY(thickness)
+			&& pos.y <= MaxY(thickness);
+	}
 }
