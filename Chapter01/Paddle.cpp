@@ -99,7 +99,7 @@ void Paddle::UpdateSelf(float deltaTime)
 const SDL_Rect& Paddle::GetRect() const
 {
 	return {
-		static_cast<int>(mPosition.x),
+		static_cast<int>(mPosition.x - mWidth / 2),
 		static_cast<int>(mPosition.y - mHeight / 2),
 		static_cast<int>(mWidth),
 		static_cast<int>(mHeight)

@@ -310,9 +310,7 @@ bool Game::CheckBallPaddle(Ball& ball, Paddle& paddle)
 		// Our y-difference is small enough
 		diffY <= paddle.mHeight / 2.0f &&
 		// We are in the correct x-position
-		diffX <= (paddle.mWidth + ball.mThickness) / 2.f &&
-		// The ball is moving to the left
-		ball.mVelocity.x < 0.0f)
+		diffX <= (paddle.mWidth + ball.mThickness) / 2.f)
 	{
 		ball.mVelocity.x *= -1.0f;
 		ball.mLastPaddleTouched = &paddle;

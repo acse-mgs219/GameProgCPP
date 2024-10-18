@@ -24,8 +24,8 @@ namespace Utils
 
 	bool Extents::IsInside(Vector2 pos, float thickness) const
 	{
-		return pos.x >= MinX(thickness)
-			&& pos.x <= MaxX(thickness)
+		return pos.x > MinX(thickness)
+			&& pos.x < MaxX(thickness)
 			&& pos.y >= MinY(thickness)
 			&& pos.y <= MaxY(thickness);
 	}
