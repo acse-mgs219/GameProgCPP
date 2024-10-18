@@ -11,15 +11,9 @@
 #include <string>
 #include <format>
 #include <iostream>
-
-Game::Game()
-:mWindow(nullptr)
-,mRenderer(nullptr)
-,mTicksCount(0)
-,mIsRunning(true)
-{
-	
-}
+#include <type_traits>
+#include <thread>
+#include <atomic>
 
 bool Game::Initialize()
 {
@@ -72,10 +66,13 @@ bool Game::Initialize()
 
 void Game::RunLoop()
 {
-	while (mIsRunning)
+	while (mGameState != GameState::GameOver)
 	{
-		ProcessInput();
-		UpdateGame();
+		if (mGameState == GameState::Playing)
+		{
+			ProcessInput();
+			UpdateGame();
+		}
 		GenerateOutput();
 	}
 }
@@ -89,7 +86,7 @@ void Game::ProcessInput()
 		{
 			// If we get an SDL_QUIT event, end loop
 			case SDL_QUIT:
-				mIsRunning = false;
+				mGameState == GameState::GameOver;
 				break;
 		}
 	}
@@ -99,7 +96,7 @@ void Game::ProcessInput()
 	// If escape is pressed, also end loop
 	if (state[SDL_SCANCODE_ESCAPE])
 	{
-		mIsRunning = false;
+		mGameState == GameState::GameOver;
 	}
 
 	for (auto& go : mGameObjects)
@@ -133,6 +130,11 @@ void Game::UpdateGame()
 		{
 			paddle->MockInputAI(deltaTime, mBalls);
 		}
+		if (paddle->HasLost())
+		{
+			mGameState = GameState::ShowingScores;
+			mPlayerWon = paddle->IsAIControlled();
+		}
 	}
 
 	for (auto& go : mGameObjects)
@@ -152,9 +154,9 @@ void Game::GenerateOutput()
 	// Set draw color to blue
 	SDL_SetRenderDrawColor(
 		mRenderer,
-		0,		// R
-		0,		// G 
-		255,	// B
+		mBackgroundColor.r,		// R
+		mBackgroundColor.g,		// G 
+		mBackgroundColor.b,		// B
 		255		// A
 	);
 	
@@ -169,7 +171,18 @@ void Game::GenerateOutput()
 		SDL_RenderFillRect(mRenderer, &(go->GetRect()));
 	}
 	
-	PrintScores();
+	if (mGameState == GameState::Playing)
+	{
+		PrintScores();
+	}
+	else
+	{
+		std::thread([this]() {
+			std::this_thread::sleep_for(std::chrono::seconds(5)); // Wait for 5 seconds
+			mGameState = GameState::GameOver;
+		}).detach();  // Detach the thread so it runs independently
+		ShowEndScreen();
+	}
 
 	// Swap front buffer and back buffer
 	SDL_RenderPresent(mRenderer);
@@ -189,7 +202,7 @@ void Game::PrintScores()
 
 	// as TTF_RenderText_Solid could only be used on
 	// SDL_Surface then you have to create the surface first
-	std::string scoreMessage = std::format("{} - {}", mPaddles.front()->GetScore(), mPaddles.back()->GetScore());
+	std::string scoreMessage = std::format("Score: {} - {}", mPaddles.front()->GetScore(), mPaddles.back()->GetScore());
 	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(mFont, scoreMessage.data(), White);
 
 	// now you can convert it into a texture
@@ -215,6 +228,66 @@ void Game::PrintScores()
 	SDL_RenderCopy(mRenderer, Message, NULL, &Message_rect);
 
 	// Don't forget to free your surface and texture
+	SDL_FreeSurface(surfaceMessage);
+	SDL_DestroyTexture(Message);
+}
+
+void Game::ShowEndScreen()
+{
+	if (mFont == nullptr)
+	{
+		return;
+	}
+
+	// this is the color in rgb format,
+	// maxing out all would give you the color white,
+	// and it will be your text's color
+	static SDL_Color ColorToUse;
+	static std::atomic<bool> lastColorWasWhite{ false };
+	
+	static std::thread flasher([this]() 
+	{
+		while (true) 
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+			static SDL_Color White = { 255, 255, 255 };
+			static SDL_Color Black = { 0, 0, 0 };
+
+			ColorToUse = lastColorWasWhite ? Black : White;
+			mBackgroundColor = lastColorWasWhite ? White : Black;
+			lastColorWasWhite = !lastColorWasWhite;
+		}
+	});
+
+
+	if (!flasher.joinable()) {
+		flasher.detach();
+	}
+
+	// as TTF_RenderText_Solid could only be used on
+	// SDL_Surface then you have to create the surface first
+	const char* scoreFormatString = mPlayerWon ? "YOU'RE WINNER! Final score: {} - {}" : "You lost! Final score: {} - {}";
+	std::string playerScore = std::to_string(mPaddles.front()->GetScore());
+	std::string aiScore = std::to_string(mPaddles.back()->GetScore());
+	std::string scoreMessage = std::vformat(scoreFormatString, std::make_format_args(playerScore, aiScore));
+
+	TTF_SetFontStyle(mFont, TTF_STYLE_BOLD);
+	TTF_SetFontStyle(mFont, TTF_STYLE_UNDERLINE);
+	TTF_SetFontStyle(mFont, TTF_STYLE_ITALIC);
+	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(mFont, scoreMessage.data(), ColorToUse);
+
+	// now you can convert it into a texture
+	SDL_Texture* Message = SDL_CreateTextureFromSurface(mRenderer, surfaceMessage);
+
+	SDL_Rect Message_rect{};
+	Message_rect.x = GetExtents().Center().x;
+	Message_rect.y = GetExtents().Center().y;
+	Message_rect.w = 200;
+	Message_rect.h = 50;
+
+	SDL_RenderCopy(mRenderer, Message, NULL, &Message_rect);
+
 	SDL_FreeSurface(surfaceMessage);
 	SDL_DestroyTexture(Message);
 }
@@ -269,7 +342,7 @@ void Game::InitText()
 {
 	//this opens a font style and sets a size
 	TTF_Init();
-	mFont = TTF_OpenFont("Data/whatnot.ttf", 12);
+	mFont = TTF_OpenFont("Data/whatnot.ttf", 24);
 	if (mFont == nullptr)
 	{
 		std::string error = TTF_GetError();
@@ -374,9 +447,13 @@ bool Game::CheckBallWall(Ball& ball, const Wall& wall)
 
 void Game::HandleBallExited(Ball& ball)
 {
-	if (ball.mLastPaddleTouched)
+    auto closest_paddle = std::ranges::min_element(mPaddles, std::less{}, [&ball](const std::unique_ptr<Paddle>& paddle) {
+        return Utils::Vector2::Distance(ball.mPosition, paddle->mPosition);
+    });
+
+	if (closest_paddle != mPaddles.end())
 	{
-		ball.mLastPaddleTouched->Score();
+		(*closest_paddle)->LoseScore();
 	}
 	ball.Reset();
 }

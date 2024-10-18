@@ -49,9 +49,10 @@ public:
 	const SDL_Rect& GetRect() const override;
 
 	void SetDirection(Paddle::Direction dir) { mDirection = dir; }
-	void Score() { mScore++; }
+	void LoseScore() { mScore--; }
 	int GetScore() const { return mScore; }
 	bool IsAIControlled() const { return mControls.mIsHuman == false; }
+	bool HasLost() const { return mScore <= 0; }
 
 	Direction mDirection{ Direction::Up };
 	Utils::Vector2 mPosition;
@@ -61,6 +62,6 @@ public:
 private:
 	PaddleControls mControls;
 	float mSpeed;
-	int mScore{0};
+	int mScore{3};
 };
 

@@ -19,11 +19,18 @@
 #include <vector>
 #include <utility>
 
+enum class GameState
+{
+	Playing,
+	ShowingScores,
+	GameOver
+};
+
 // Game class
 class Game
 {
 public:
-	Game();
+	Game() = default;
 	// Initialize the game
 	bool Initialize();
 	// Runs the game loop until the game is over
@@ -38,6 +45,7 @@ private:
 	void UpdateGame();
 	void GenerateOutput();
 	void PrintScores();
+	void ShowEndScreen();
 
 	// Pong specific helper functions
 	void SetupWalls();
@@ -51,15 +59,19 @@ private:
 	void HandleBallExited(Ball& ball);
 
 	// Window created by SDL
-	SDL_Window* mWindow;
+	SDL_Window* mWindow{ nullptr };
 	// Renderer for 2D drawing
-	SDL_Renderer* mRenderer;
+	SDL_Renderer* mRenderer{ nullptr };
+	// Background color - blue initially
+	SDL_Color mBackgroundColor{ 0, 0, 255 };
 	// Font we use for showing the scores
-	TTF_Font* mFont;
+	TTF_Font* mFont{ nullptr };
 	// Number of ticks since start of game
-	Uint32 mTicksCount;
+	Uint32 mTicksCount{ 0 };
 	// Game should continue to run
-	bool mIsRunning;
+	GameState mGameState{GameState::Playing};
+	// PlayerWon == false -> if we're checking this variable, implies AI won
+	bool mPlayerWon{ false };
 	
 	// Pong specific
 	std::vector<std::unique_ptr<Paddle>> mPaddles;

@@ -9,6 +9,8 @@ namespace Utils
 	{
 		float x{ .0f };
 		float y{ .0f };
+
+		static float Distance(const Vector2& vec1, const Vector2& vec2);
 	};
 
 	struct Extents
@@ -17,6 +19,7 @@ namespace Utils
 		float MaxY(float height) const;
 		float MinX(float width) const;
 		float MaxX(float width) const;
+		Vector2 Center() const;
 		bool IsInside(Vector2 pos, float thickness) const;
 
 		float top;
