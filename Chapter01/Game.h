@@ -49,6 +49,7 @@ private:
 
 	// Pong specific helper functions
 	void SetupWalls();
+	void SpawnBall(Utils::Vector2 initialPos, Utils::Vector2 initialVel);
 	void SetupBalls();
 	void SetupPaddles();
 
@@ -76,6 +77,7 @@ private:
 	// Pong specific
 	std::vector<std::unique_ptr<Paddle>> mPaddles;
 	std::vector<std::unique_ptr<Ball>> mBalls;
+	std::vector<Ball> mBallsToSpawn;
 	std::vector<std::unique_ptr<Wall>> mWalls;
 	std::vector<IGameObject*> mGameObjects;
 	std::pair<int, int> mScores;

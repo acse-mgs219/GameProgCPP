@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <thread>
 #include <atomic>
+#include <ctime>
 
 bool Game::Initialize()
 {
@@ -162,12 +163,11 @@ void Game::GenerateOutput()
 	
 	// Clear back buffer
 	SDL_RenderClear(mRenderer);
-
-	// Draw walls
-	SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
 	
 	for (const auto& go : mGameObjects)
 	{
+		const SDL_Color& goDrawColor = go->GetColor();
+		SDL_SetRenderDrawColor(mRenderer, goDrawColor.r, goDrawColor.g, goDrawColor.b, goDrawColor.a);
 		SDL_RenderFillRect(mRenderer, &(go->GetRect()));
 	}
 	
@@ -186,6 +186,12 @@ void Game::GenerateOutput()
 
 	// Swap front buffer and back buffer
 	SDL_RenderPresent(mRenderer);
+	for (const Ball ballToSpawn : mBallsToSpawn)
+	{
+		mBalls.emplace_back(std::make_unique<Ball>(ballToSpawn));
+		mGameObjects.push_back(mBalls.back().get());
+	}
+	mBallsToSpawn.clear();
 }
 
 void Game::PrintScores()
@@ -322,8 +328,31 @@ void Game::SetupBalls()
 {
 	Utils::Vector2 ballPos{ 1024.f / 2.f, 768.f / 2.f };
 	Utils::Vector2 ballVel{ -200.f, 235.f };
-	mBalls.emplace_back(std::make_unique<Ball>(ballPos, ballVel));
-	mGameObjects.emplace_back(mBalls.back().get());
+	SpawnBall(ballPos, ballVel);
+	
+}
+
+void Game::SpawnBall(Utils::Vector2 initialPos, Utils::Vector2 initialVel)
+{
+	static std::vector<SDL_Color> ballColors = {
+	{ 255, 255, 255, 255 },
+	{ 255, 0, 0, 255 },
+	{ 0, 255, 0, 255 },
+	{ 255, 255, 0, 255 },
+	{ 0, 255, 255, 255 },
+	{ 255, 0, 255, 255 },
+	{ 0, 0, 0, 255 }
+	};
+
+	SDL_Color ballColor = { 255, 255, 255, 255 };
+	if (ballColors.size() > 0)
+	{
+		const int ballIndex = rand() % ballColors.size();
+		ballColor = ballColors[ballIndex];
+		ballColors.erase(ballColors.begin() + ballIndex);
+	}
+	const std::optional<float> ballThickness = std::nullopt; // keep default
+	mBallsToSpawn.emplace_back(Ball(initialPos, initialVel, ballThickness, ballColor));
 }
 
 void Game::SetupPaddles()
@@ -334,6 +363,7 @@ void Game::SetupPaddles()
 
 	paddlePos = { 1024.f - 10.f, 768.f / 2.f };
 	PaddleControls aiPaddleControls{ .mIsHuman = false, .mAIStrength = PaddleControls::Difficulty::Medium, .mUpButton = SDL_Scancode::SDL_NUM_SCANCODES, .mDownButton = SDL_Scancode::SDL_NUM_SCANCODES };
+	//PaddleControls humanPaddleControls{ .mIsHuman = true, .mAIStrength = PaddleControls::Difficulty::None, .mUpButton = SDL_SCANCODE_UP, .mDownButton = SDL_SCANCODE_DOWN };
 	mPaddles.emplace_back(std::make_unique<Paddle>(paddlePos, aiPaddleControls));
 	mGameObjects.emplace_back(mPaddles.back().get());
 }
@@ -342,7 +372,7 @@ void Game::InitText()
 {
 	//this opens a font style and sets a size
 	TTF_Init();
-	mFont = TTF_OpenFont("Data/whatnot.ttf", 24);
+	mFont = TTF_OpenFont("Data/whatnot.ttf", 99);
 	if (mFont == nullptr)
 	{
 		std::string error = TTF_GetError();
@@ -456,6 +486,19 @@ void Game::HandleBallExited(Ball& ball)
 		(*closest_paddle)->LoseScore();
 	}
 	ball.Reset();
+
+	const int scoreDifference = mPaddles.front()->GetScore() - mPaddles.back()->GetScore();
+	
+	srand((unsigned)time(0));
+
+	Utils::Vector2 baseVel = Utils::Vector2(200.f, 235.f);
+	float velSignX = scoreDifference > 0 ? -1.f : 1.f;
+	float velSignY = rand() % 2 == 0 ? -1.f : 1.f;
+	Utils::Vector2 newBallVel{ (baseVel.x + rand() % 30) * velSignX, (baseVel.y + rand() % 30) * velSignY };
+
+	Utils::Vector2 newBallPos{ ball.mPosition.x - (100.f + 35.f * (rand() % mBalls.size())) * scoreDifference, ball.mPosition.y + 35.f * (rand() % mBalls.size()) * -velSignY};
+
+	SpawnBall(newBallPos, newBallVel);
 }
 
 void Game::Shutdown()

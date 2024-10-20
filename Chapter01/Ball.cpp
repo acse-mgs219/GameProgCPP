@@ -3,12 +3,13 @@
 
 #include <algorithm>
 
-Ball::Ball(Utils::Vector2 pos, Utils::Vector2 vel, std::optional<float> thickness) 
+Ball::Ball(Utils::Vector2 pos, Utils::Vector2 vel, std::optional<float> thickness, std::optional<SDL_Color> color)
 	: mPosition(pos)
 	, mOriginalPosition(pos)
 	, mVelocity(vel)
 	, mOriginalVelocity(vel)
 	, mThickness(thickness.value_or(Utils::defaultThickness))
+	, mBallColor(color.value_or(SDL_Color{ 255, 255, 255, 255 }))
 {
 }
 
@@ -30,6 +31,11 @@ const SDL_Rect& Ball::GetRect() const
 		static_cast<int>(mThickness),
 		static_cast<int>(mThickness)
 	};
+}
+
+const SDL_Color& Ball::GetColor() const
+{
+	return mBallColor;
 }
 
 void Ball::Reset()

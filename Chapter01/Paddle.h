@@ -62,6 +62,7 @@ public:
 private:
 	PaddleControls mControls;
 	float mSpeed;
-	int mScore{3};
+	float mAIUpdateInterval;
+	int mScore{10};
 };
 

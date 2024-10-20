@@ -1,10 +1,10 @@
 #include "Paddle.h"
 
 #include "Game.h"
+#include "Utils.h"
 
 #include <algorithm>
 #include <cmath>
-#include <numeric>
 
 constexpr float defaultHeight = 100.0f;
 constexpr float defaultSpeed = 1.f;
@@ -15,6 +15,7 @@ Paddle::Paddle(Utils::Vector2 initialPosition, PaddleControls controls, std::opt
 	, mHeight{width.value_or(defaultHeight)}
 	, mWidth{height.value_or(Utils::defaultThickness)}
 	, mSpeed{speed.value_or(defaultSpeed)}
+	, mAIUpdateInterval{controls.UpdateInterval()}
 {
 }
 
@@ -43,13 +44,12 @@ void Paddle::MockInputAI(float deltaTime, const std::vector<std::unique_ptr<Ball
 {
 	static float accumulatedTime = .0f;
 	accumulatedTime += deltaTime;
-	if (accumulatedTime < mControls.UpdateInterval())
+	if (accumulatedTime < mAIUpdateInterval)
 	{
 		return;
 	}
-	deltaTime = .0f;
+	accumulatedTime = .0f;
 
-	// #TODO: Could be a util function for Vector 2
 	static const auto distanceCalculator = [&mPosition = mPosition](const std::unique_ptr<Ball>& ball)
 		{
 			if (ball.get() == nullptr)
@@ -57,7 +57,7 @@ void Paddle::MockInputAI(float deltaTime, const std::vector<std::unique_ptr<Ball
 				return std::numeric_limits<float>::max();
 			}
 
-			return std::sqrtf(std::powf((mPosition.x - ball->mPosition.x), 2) + std::powf((mPosition.y - ball->mPosition.y), 2));
+			return Utils::Vector2::Distance(ball->mPosition, mPosition);
 		};
 
 	const auto& closestBall = std::min_element(balls.begin(), balls.end(), [&](const std::unique_ptr<Ball>& b1, const std::unique_ptr<Ball>& b2)
@@ -113,9 +113,9 @@ float PaddleControls::UpdateInterval() const
 	case Difficulty::None:
 		return std::numeric_limits<float>::max();
 	case Difficulty::Easy:
-		return .05f;
+		return .5f;
 	case Difficulty::Medium:
-		return .04f;
+		return .25f;
 	case Difficulty::Hard:
 		return .02f;
 	case Difficulty::Impossible:
