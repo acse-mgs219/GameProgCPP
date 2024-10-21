@@ -51,16 +51,16 @@ public:
 private:
 	// All textures in the animation
 	std::vector<SDL_Texture*> mAnimTextures;
-	// Current frame displayed
-	float mCurrFrame;
+	// Current frame displayed. Float to represent time til next frame
+	float mCurrFrame{0.0f};
 	// Animation frame rate
-	float mAnimFPS;
+	float mAnimFPS{24.0f};
 	AnimState mAnimState{AnimState::Paused};
 
 	// Support different animation sequences
 	std::unordered_map<std::string, AnimSequence> mAnimSequences;
-	const AnimSequence* mCurrentAnim;
-	int mLoopCount; // negative value to loop forever
+	const AnimSequence* mCurrentAnim{nullptr};
+	int mLoopCount{0}; // negative value to loop forever
 
 	static const std::string sFullSequence;
 };
