@@ -22,21 +22,34 @@ void AnimSpriteComponent::Update(float deltaTime)
 {
 	SpriteComponent::Update(deltaTime);
 
-	if (mAnimTextures.size() > 0)
+	if (mAnimTextures.size() == 0 || mAnimState != AnimState::Playing)
 	{
-		// Update the current frame based on frame rate
-		// and delta time
-		mCurrFrame += mAnimFPS * deltaTime;
-		
-		// Wrap current frame if needed
-		while (mCurrFrame >= mAnimTextures.size())
-		{
-			mCurrFrame -= mAnimTextures.size();
-		}
-
-		// Set the current texture
-		SetTexture(mAnimTextures[static_cast<int>(mCurrFrame)]);
+		return;
 	}
+
+	// Update the current frame based on frame rate
+	// and delta time
+	mCurrFrame += mAnimFPS * deltaTime;
+		
+	// Wrap current frame if needed
+	if (mCurrFrame >= mCurrentAnim->EndFrame)
+	{
+		if (mLoopCount-- != 0)
+		{
+			while (mCurrFrame >= mCurrentAnim->EndFrame)
+			{
+				mCurrFrame -= mCurrentAnim->NumFrames;
+			}
+		}
+		else
+		{
+			mCurrFrame = static_cast<float>(mCurrentAnim->EndFrame);
+			mAnimState = AnimState::Stopped;
+		}
+	}
+
+	// Set the current texture
+	SetTexture(mAnimTextures[static_cast<int>(mCurrFrame)]);
 }
 
 void AnimSpriteComponent::SetAnimTextures(const std::vector<SDL_Texture*>& textures)
@@ -50,6 +63,7 @@ void AnimSpriteComponent::SetAnimTextures(const std::vector<SDL_Texture*>& textu
 		SetTexture(mAnimTextures[0]);
 		CreateAnimSequence({ 0, animFrames - 1 }, sFullSequence);
 		SetAnimSequence(sFullSequence);
+		mAnimState = AnimState::Playing;
 	}
 }
 

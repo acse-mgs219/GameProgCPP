@@ -14,8 +14,23 @@
 
 struct AnimSequence
 {
+	AnimSequence(int start, int end)
+		:StartFrame(start)
+		, EndFrame(end)
+		, NumFrames(end - start + 1)
+	{
+	}
+
 	int StartFrame;
 	int EndFrame;
+	const int NumFrames;
+};
+
+enum class AnimState
+{
+	Playing,
+	Paused,
+	Stopped
 };
 
 class AnimSpriteComponent : public SpriteComponent
@@ -40,6 +55,7 @@ private:
 	float mCurrFrame;
 	// Animation frame rate
 	float mAnimFPS;
+	AnimState mAnimState{AnimState::Paused};
 
 	// Support different animation sequences
 	std::unordered_map<std::string, AnimSequence> mAnimSequences;
