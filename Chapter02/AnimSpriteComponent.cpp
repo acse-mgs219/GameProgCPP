@@ -9,6 +9,8 @@
 #include "AnimSpriteComponent.h"
 #include "Math.h"
 
+const std::string AnimSpriteComponent::sFullSequence = "Full";
+
 AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int drawOrder)
 	:SpriteComponent(owner, drawOrder)
 	, mCurrFrame(0.0f)
@@ -40,10 +42,29 @@ void AnimSpriteComponent::Update(float deltaTime)
 void AnimSpriteComponent::SetAnimTextures(const std::vector<SDL_Texture*>& textures)
 {
 	mAnimTextures = textures;
-	if (mAnimTextures.size() > 0)
+	const int animFrames = mAnimTextures.size();
+	if (animFrames > 0)
 	{
 		// Set the active texture to first frame
 		mCurrFrame = 0.0f;
 		SetTexture(mAnimTextures[0]);
+		CreateAnimSequence({ 0, animFrames - 1 }, sFullSequence);
+		SetAnimSequence(sFullSequence);
+	}
+}
+
+void AnimSpriteComponent::CreateAnimSequence(AnimSequence&& seq, std::string name)
+{
+	mAnimSequences.emplace(name, std::move(seq));
+}
+
+void AnimSpriteComponent::SetAnimSequence(const std::string& name, int repeatCount)
+{
+	auto iter = mAnimSequences.find(name);
+	if (iter != mAnimSequences.end())
+	{
+		mCurrentAnim = &iter->second;
+		mCurrFrame = static_cast<float>(mCurrentAnim->StartFrame);
+		mLoopCount = repeatCount;
 	}
 }
