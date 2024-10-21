@@ -65,9 +65,13 @@ void AnimSpriteComponent::SetAnimTextures(const std::vector<SDL_Texture*>& textu
 	}
 }
 
-void AnimSpriteComponent::CreateAnimSequence(AnimSequence&& seq, std::string name)
+void AnimSpriteComponent::CreateAnimSequence(AnimSequence&& seq, std::string name, std::optional<int> startWithRepeatCount)
 {
 	mAnimSequences.emplace(name, std::move(seq));
+	if (startWithRepeatCount.has_value())
+	{
+		SetAnimSequence(name, startWithRepeatCount.value());
+	}
 }
 
 void AnimSpriteComponent::SetAnimSequence(const std::string& name, int repeatCount)

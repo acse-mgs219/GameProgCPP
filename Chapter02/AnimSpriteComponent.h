@@ -11,6 +11,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <optional>
 
 struct AnimSequence
 {
@@ -46,7 +47,7 @@ public:
 	void SetAnimFPS(float fps) { mAnimFPS = fps; }
 
 	// Support different animation sequences
-	void CreateAnimSequence(AnimSequence&& seq, std::string name);
+	void CreateAnimSequence(AnimSequence&& seq, std::string name, std::optional<int> startWithRepeatCount = std::nullopt);
 	void SetAnimSequence(const std::string& name, int repeatCount = -1);
 private:
 	// All textures in the animation
