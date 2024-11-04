@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "Actor.h"
 #include "SpriteComponent.h"
-#include "Ship.h"
+#include "Humanoid.h"
 #include "BGSpriteComponent.h"
 
 Game::Game()
@@ -87,8 +87,8 @@ void Game::ProcessInput()
 		mIsRunning = false;
 	}
 
-	// Process ship input
-	mShip->ProcessKeyboard(state);
+	// Process character input
+	mHumanoid->ProcessKeyboard(state);
 }
 
 void Game::UpdateGame()
@@ -153,10 +153,10 @@ void Game::GenerateOutput()
 
 void Game::LoadData()
 {
-	// Create player's ship
-	mShip = new Ship(this);
-	mShip->SetPosition(Vector2(100.0f, 384.0f));
-	mShip->SetScale(1.5f);
+	// Create player's character
+	mHumanoid = new Humanoid(this);
+	mHumanoid->SetPosition(Vector2(100.0f, 384.0f));
+	mHumanoid->SetScale(1.5f);
 
 	// Create actor for the background (this doesn't need a subclass)
 	Actor* temp = new Actor(this);

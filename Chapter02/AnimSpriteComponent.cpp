@@ -34,10 +34,7 @@ void AnimSpriteComponent::Update(float deltaTime)
 	{
 		if (mLoopCount-- != 0)
 		{
-			while (mCurrFrame >= mCurrentAnim->EndFrame)
-			{
-				mCurrFrame -= mCurrentAnim->NumFrames;
-			}
+			mCurrFrame = mCurrentAnim->StartFrame;
 		}
 		else
 		{

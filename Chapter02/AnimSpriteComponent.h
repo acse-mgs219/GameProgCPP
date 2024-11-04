@@ -12,19 +12,30 @@
 #include <unordered_map>
 #include <string>
 #include <optional>
+#include <iostream>
 
 struct AnimSequence
 {
+	/// Zero-based indexing
 	AnimSequence(int start, int end)
 		:StartFrame(start)
 		, EndFrame(end)
 		, NumFrames(end - start + 1)
 	{
+		std::cout << "Constructing Anim Sequence " << StartFrame << " to " << EndFrame << std::endl;
+	}
+
+	AnimSequence(AnimSequence&& mov) noexcept
+		: StartFrame(std::move(mov.StartFrame))
+		, EndFrame(std::move(mov.EndFrame))
+		, NumFrames(EndFrame - StartFrame + 1)
+	{
+		std::cout << "Moving Anim Sequence " << StartFrame << " to " << EndFrame << std::endl;
 	}
 
 	int StartFrame;
 	int EndFrame;
-	const int NumFrames;
+	int NumFrames;
 };
 
 enum class AnimState
