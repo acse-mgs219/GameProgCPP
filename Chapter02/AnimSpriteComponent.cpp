@@ -32,15 +32,24 @@ void AnimSpriteComponent::Update(float deltaTime)
 	// Wrap current frame if needed
 	if (mCurrFrame >= mCurrentAnim->EndFrame)
 	{
-		if (mLoopCount-- != 0)
+		if (mLoopCount-- == 0)
 		{
-			mCurrFrame = mCurrentAnim->StartFrame;
+			mAnimState = AnimState::Stopped;
+			mCurrFrame = mCurrentAnim->EndFrame;
 		}
 		else
 		{
-			mCurrFrame = static_cast<float>(mCurrentAnim->EndFrame);
-			mAnimState = AnimState::Stopped;
+			mCurrFrame = mCurrentAnim->StartFrame;
 		}
+		//if (mLoopCount-- != 0)
+		//{
+		//	mCurrFrame = mCurrentAnim->StartFrame;
+		//}
+		//else
+		//{
+		//	mCurrFrame = static_cast<float>(mCurrentAnim->EndFrame);
+		//	mAnimState = AnimState::Stopped;
+		//}
 	}
 
 	// Set the current texture
@@ -58,7 +67,6 @@ void AnimSpriteComponent::SetAnimTextures(const std::vector<SDL_Texture*>& textu
 		SetTexture(mAnimTextures[0]);
 		CreateAnimSequence({ 0, animFrames - 1 }, sFullSequence);
 		SetAnimSequence(sFullSequence);
-		mAnimState = AnimState::Playing;
 	}
 }
 
@@ -76,8 +84,13 @@ void AnimSpriteComponent::SetAnimSequence(const std::string& name, int repeatCou
 	auto iter = mAnimSequences.find(name);
 	if (iter != mAnimSequences.end())
 	{
+		const bool differentAnim = mCurrentAnim != &iter->second;
 		mCurrentAnim = &iter->second;
-		mCurrFrame = static_cast<float>(mCurrentAnim->StartFrame);
+		if (mAnimState != AnimState::Playing || differentAnim)
+		{
+			mCurrFrame = static_cast<float>(mCurrentAnim->StartFrame);
+		}
 		mLoopCount = repeatCount;
+		mAnimState = AnimState::Playing;
 	}
 }

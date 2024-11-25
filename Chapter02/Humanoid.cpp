@@ -46,6 +46,7 @@ Humanoid::Humanoid(Game* game)
 	mAnimSpriteComponent->CreateAnimSequence(std::move(jumpingSequence), "Jumping");
 
 	mAnimSpriteComponent->CreateAnimSequence(AnimSequence(15, 17), "Punching");
+	mAnimSpriteComponent->SetAnimSequence("Walking");
 }
 
 void Humanoid::UpdateActor(float deltaTime)
