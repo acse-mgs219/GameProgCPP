@@ -13,6 +13,7 @@
 #include "SpriteComponent.h"
 #include "Humanoid.h"
 #include "BGSpriteComponent.h"
+#include "TileMapComponent.h"
 
 Game::Game()
 :mWindow(nullptr)
@@ -161,24 +162,13 @@ void Game::LoadData()
 	// Create actor for the background (this doesn't need a subclass)
 	Actor* temp = new Actor(this);
 	temp->SetPosition(Vector2(512.0f, 384.0f));
-	// Create the "far back" background
-	BGSpriteComponent* bg = new BGSpriteComponent(temp);
-	bg->SetScreenSize(Vector2(1024.0f, 768.0f));
-	std::vector<SDL_Texture*> bgtexs = {
-		GetTexture("Assets/Farback01.png"),
-		GetTexture("Assets/Farback02.png")
-	};
-	bg->SetBGTextures(bgtexs);
-	bg->SetScrollSpeed(-100.0f);
-	// Create the closer background
-	bg = new BGSpriteComponent(temp, 50);
-	bg->SetScreenSize(Vector2(1024.0f, 768.0f));
-	bgtexs = {
-		GetTexture("Assets/Stars.png"),
-		GetTexture("Assets/Stars.png")
-	};
-	bg->SetBGTextures(bgtexs);
-	bg->SetScrollSpeed(-200.0f);
+
+	TileMapComponent* tmc = new TileMapComponent(temp, 12);
+	tmc->SetTextures(GetTexture("Assets/Tiles.png"), "Assets/MapLayer1.csv", 1024, 768);
+	TileMapComponent* tmc2 = new TileMapComponent(temp, 9);
+	tmc2->SetTextures(GetTexture("Assets/TileMap.png"), "Assets/MapLayer2.csv", 1024, 768);
+	TileMapComponent* tmc3 = new TileMapComponent(temp, 6);
+	tmc3->SetTextures(GetTexture("Assets/TileMap.png"), "Assets/MapLayer3.csv", 1024, 768);
 }
 
 void Game::UnloadData()

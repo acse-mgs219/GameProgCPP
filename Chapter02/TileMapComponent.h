@@ -12,7 +12,7 @@ public:
 	~TileMapComponent();
 
 	void Draw(SDL_Renderer* renderer) override;
-	void SetTextures(SDL_Texture* texture, std::string_view tileMapFilepath);
+	void SetTextures(SDL_Texture* texture, std::string_view tileMapFilepath, int width, int height);
 
 private:
 	std::vector<std::vector<int>> mTileMap;

@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <istream>
 #include <SDL/SDL_rect.h>
 
 TileMapComponent::TileMapComponent(Actor* owner, int drawOrder)
@@ -59,10 +60,12 @@ void TileMapComponent::Draw(SDL_Renderer* renderer)
 	}
 }
 
-void TileMapComponent::SetTextures(SDL_Texture* texture, std::string_view tileMapFilepath)
+void TileMapComponent::SetTextures(SDL_Texture* texture, std::string_view tileMapFilepath, int width, int height)
 {
-	SpriteComponent::SetTexture(texture);
-	
+	mTexture = texture;
+	mTexWidth = width;
+	mTexHeight = height;
+
 	std::ifstream file(tileMapFilepath.data());
 	mTileMap.clear();
 
@@ -71,10 +74,11 @@ void TileMapComponent::SetTextures(SDL_Texture* texture, std::string_view tileMa
 	while (std::getline(file, line))
 	{
 		std::vector<int> row;
-		std::stringstream iss(line);
+		std::istringstream iss(line);
 		int c = 0;
+		char comma = ',';
 
-		while (iss << c << ",")
+		while (iss >> c >> comma)
 		{
 			row.push_back(c);
 		}
